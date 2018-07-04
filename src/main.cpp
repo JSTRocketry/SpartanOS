@@ -1,17 +1,21 @@
+5
 #include <Arduino.h>
 
 /* Constants */
 #define MAIN_CHUTE_OVERRIDE_TIMER 100
 #define MINIMUM_ALTITUDE 20
 #define MAIN_CHUTE_MIN_DEPLOY_ALTITUDE 150
+#define MAX_ANGULAR_VELOCITY_X_Y 60
+#define MAX_ANGULAR_VELOCITY_Z 1000
 
 
 /* Class Declerations */
-#include <IgnititonSystem.h>
+
 #include <RadioTelemetry.h>
 #include <RecoverySystem.h>
 #include <SdStorage.h>
 #include <SensorPackage.h>
+#include <IgnititonSystem.h>
 /* Function Prototypes */
 
 /* Flight Time Variables */
@@ -39,7 +43,7 @@ enum FlightMode{
 };
 
 enum EmergencyModes{
-
+  MINIMUM_ALTITUDE_NOT_REACHED, UNEXPECTED_LOSS_OF_CONTROL, UNEXPECTED_LOSS_OF_POWER
 }
 
 bool harnessModeActive = false;
@@ -52,8 +56,60 @@ void setup() {
     // put your setup code here, to run once:
 }
 
-void updateSystems(){
+String serialBuffer;
 
+int checkForSerialCommand(String *line){
+  if(Serial.available()){
+    while(Serial.available()){
+      char c = (char)Serial.read();
+      if(c == '\n' || c =='\r'){
+        *line = serialBuffer;
+        return 0;
+        serialBuffer = "";
+      }
+      serialBuffer += c;
+    }
+  }
+  return -1;
+}
+
+bool harnessModeGyroOverride = false;
+bool harnessModeAccelOverride = false;
+bool harnessModeMagOverride = false;
+bool harnessModeAttitudeOverride = false;
+bool harnessModePressureAltitudeOverride = false;
+
+#define NEW_HARNESS_MODE_COMMAND -1
+#define NEW_HARNESS_MODE_DATA_OVERRIDE -2
+#define NO_NEW_HARNESS_COMMAND -3
+String serialCommand;
+int checkForHarnessCommand(){
+
+  int newCommandStatus = checkForSerialCommand(&serialCommand);
+  if(newCommandStatus == 0){
+    //save the line here
+  }
+  else return NO_NEW_HARNESS_COMMAND;
+  if(!harnessModeActive){
+    if(serialCommand == ENTER_HARNESS_MODE_COMMAND){
+      harnessModeActive = true;
+      return NEW_HARNESS_MODE_COMMAND;
+    }
+  }
+  //check if appropriate harness mode command has been sent over Serial3
+  //if it has, start checking for sensor override commands
+  //if a sensor has an override, accept the data given from computer
+}
+
+void updateSystems(){
+  int harnessCommandState = checkForHarnessCommand();
+  if(!harnessModeActive){
+    //update sensors normally
+  }
+  else if()
+
+  //update sensors (unless if in Harness Mode)
+  //if in harnessMode, chec
 }
 
 int handleRecovery(){
@@ -85,7 +141,7 @@ void loop() {
     //check for recovery events
     int recoveryEvent = handleRecovery();
     //check for new radio commands and handle
-    //check for emergency modes and handle'
 
+    //check for emergency modes and handle'
 
 }
