@@ -1,4 +1,3 @@
-5
 #include <Arduino.h>
 
 /* Constants */
@@ -8,6 +7,15 @@
 #define MAX_ANGULAR_VELOCITY_X_Y 60
 #define MAX_ANGULAR_VELOCITY_Z 1000
 
+#define HARNESS_MODE_COMMAND "HARNESS_MODE=TRUE"
+#define HARNESS_MODE_GYRO_OVERRIDE "GYRO_OVERRIDE=TRUE"
+#define HARNESS_MODE_ACCEL_OVERRIDE "ACCEL_OVERRIDE=TRUE"
+#define HARNESS_MODE_MAG_OVERRIDE "MAG_OVERRIDE=TRUE"
+#define HARNESS_MODE_ATTITUDE_OVERRIDE "ATTITUDE_OVERRIDE=TRUE"
+#define HARNESS_MODE_PRESSURE_OVERRIDE "PRESSURE_OVERRIDE=TRUE"
+#define HARNESS_MODE_ALTITUDE_OVERRIDE "ALTITUDE_OVERRIDE=TRUE"
+
+
 
 /* Class Declerations */
 
@@ -15,7 +23,7 @@
 #include <RecoverySystem.h>
 #include <SdStorage.h>
 #include <SensorPackage.h>
-#include <IgnititonSystem.h>
+#include <IgnitionSystem.h>
 /* Function Prototypes */
 
 /* Flight Time Variables */
@@ -26,6 +34,9 @@ float magData[3] = {};
 float pressure;
 float pressureAltitude;
 //gps data member
+
+#define ALTITUDE_BUFFER_SIZE 1024
+float runningAltitudeData[ALTITUDE_BUFFER_SIZE] = {}; //store once per second? Or start altitude and then once per second from launch?
 
 
 /* System Variables */
@@ -42,9 +53,13 @@ enum FlightMode{
   WAITING_FOR_SYNC, WAITING_FOR_ARM, WAITING_FOR_LAUNCH, STAND_DOWN_CALLED, ABORT_CALLED
 };
 
+enum FlightPhase{
+  ON_GROUND, BOOST_PHASE, COAST_PHASE, DROGUE_CHUTE_PHASE, MAIN_CHUTE_PHASE, LANDED
+};
+
 enum EmergencyModes{
   MINIMUM_ALTITUDE_NOT_REACHED, UNEXPECTED_LOSS_OF_CONTROL, UNEXPECTED_LOSS_OF_POWER
-}
+};
 
 bool harnessModeActive = false;
 
@@ -52,7 +67,7 @@ bool harnessModeActive = false;
 
 void setup() {
   Serial.begin(115200);
-  int
+  //int
     // put your setup code here, to run once:
 }
 
@@ -91,7 +106,7 @@ int checkForHarnessCommand(){
   }
   else return NO_NEW_HARNESS_COMMAND;
   if(!harnessModeActive){
-    if(serialCommand == ENTER_HARNESS_MODE_COMMAND){
+    if(serialCommand == HARNESS_MODE_COMMAND){
       harnessModeActive = true;
       return NEW_HARNESS_MODE_COMMAND;
     }
@@ -106,12 +121,13 @@ void updateSystems(){
   if(!harnessModeActive){
     //update sensors normally
   }
-  else if()
+  //else if()
 
   //update sensors (unless if in Harness Mode)
   //if in harnessMode, chec
 }
-
+#define DROGUE_CHUTE_DEPLOYMENT 1
+#define MAIN_CHUTE_DEPLOYMENT 2
 int handleRecovery(){
   if(hasLaunchBeenTriggeredByMaster){
     if(!hasApogeeBeenDetected){
