@@ -1,5 +1,16 @@
 #include <Arduino.h>
 
+
+/*
+Status:
+Done:
+  RadioTelemetry: Good, outgoing buffer not yet tested
+
+Working on:
+  Ignition System: TODO
+
+*/
+
 /* Constants */
 #define MAIN_CHUTE_OVERRIDE_TIMER 100
 #define MINIMUM_ALTITUDE 20
