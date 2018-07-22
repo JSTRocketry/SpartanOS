@@ -16,9 +16,32 @@
 #define HARNESS_MODE_ALTITUDE_OVERRIDE "ALTITUDE_OVERRIDE=TRUE"
 
 
+#define FLIGHT_DATA_GYRO_UPDATE_MILLIS 500
+#define FLIGHT_DATA_ACCEL_UPDATE_MILLIS 500
+#define FLIGHT_DATA_MAG_UPDATE_MILLIS 500
+#define FLIGHT_DATA_ATTITUDE_UPDATE_MILLIS 100
+#define FLIGHT_DATA_TEMPERATURE_UPDATE_MILLIS 500
+#define FLIGHT_DATA_GPS_UPDATE_MILLIS 2000
+#define FLIGHT_DATA_ALTITUDE_UPDATE_MILLIS 100
+
+#define RADIO_TELEMETRY_GYRO_UPDATE_MILLIS -1
+#define RADIO_TELEMETRY_ACCEL_UPDATE_MILLIS -1
+#define RADIO_TELEMETRY_MAG_UPDATE_MILLIS -1
+#define RADIO_TELEMETRY_ATTITUDE_UPDATE_MILLIS 500
+#define RADIO_TELEMETRY_TEMPERATURE_UPDATE_MILLIS 3000
+#define RADIO_TELEMETRY_GPS_UPDATE_MILLIS 10000
+#define RADIO_TELEMETRY_ALTITUDE_UPDATE_MILLIS 500
+
+
+#define ALTITUDE_NOISE_REDUCTION_UPDATE_MILLIS 500
+#define ALTITUDE_NOISE_REDUCTION_SMOOTHER_VALUE 0.96
+
+
+#define APOGEE_DETECTION_MIN_ALTITUDE 20
+#define APOGEE_DETECTION_MIN_LAUNCH_MILLIS 10000
+
 
 /* Class Declerations */
-
 #include <RadioTelemetry.h>
 #include <RecoverySystem.h>
 #include <SdStorage.h>
@@ -35,9 +58,10 @@ float pressure;
 float pressureAltitude;
 //gps data member
 
-#define ALTITUDE_BUFFER_SIZE 1024
+#define ALTITUDE_BUFFER_SIZE 2048
 float runningAltitudeData[ALTITUDE_BUFFER_SIZE] = {}; //store once per second? Or start altitude and then once per second from launch?
-
+float currentRunningAltitude = 0;
+int runningAltitudeDataIndex = 0;
 
 /* System Variables */
 long systemTime;
@@ -57,12 +81,13 @@ enum FlightPhase{
   ON_GROUND, BOOST_PHASE, COAST_PHASE, DROGUE_CHUTE_PHASE, MAIN_CHUTE_PHASE, LANDED
 };
 
-enum EmergencyModes{
-  MINIMUM_ALTITUDE_NOT_REACHED, UNEXPECTED_LOSS_OF_CONTROL, UNEXPECTED_LOSS_OF_POWER
-};
-
 bool harnessModeActive = false;
 
+
+IgnititonSystem ignitionSystem;
+RadioTelemetry radioTelemetry;
+SdStorage flightData;
+SensorPackage sensorPackage;
 
 
 void setup() {
@@ -98,8 +123,9 @@ bool harnessModePressureAltitudeOverride = false;
 #define NEW_HARNESS_MODE_DATA_OVERRIDE -2
 #define NO_NEW_HARNESS_COMMAND -3
 String serialCommand;
-int checkForHarnessCommand(){
 
+
+int checkForHarnessCommand(){
   int newCommandStatus = checkForSerialCommand(&serialCommand);
   if(newCommandStatus == 0){
     //save the line here
@@ -151,13 +177,132 @@ int handleRecovery(){
   return 0;
 }
 
+
+
+int checkBaseCommands(){
+  //check the radio for base station commands and return with codes
+}
+
+long flightDataMillisAtLastGyroUpdate = 0;
+long flightDataMillisAtLastAccelUpdate = 0;
+long flightDataMillisAtLastMagUpdate = 0;
+long flightDataMillisAtLastAttitudeUpdate = 0;
+long flightDataMillisAtLastTemperatureUpdate = 0;
+long flightDataMillisAtLastGPSUpdate = 0;
+
+int reportFlightData(){
+  //check for appropriate time to update flight data and do so
+  long tempTime = millis();
+  if(tempTime - flightDataMillisAtLastAccelUpdate > FLIGHT_DATA_ACCEL_UPDATE_MILLIS){
+    //update accel to SD
+  }
+  if(tempTime - flightDataMillisAtLastGyroUpdate > FLIGHT_DATA_GYRO_UPDATE_MILLIS){
+    //update accel to SD
+  }
+  if(tempTime - flightDataMillisAtLastMagUpdate > FLIGHT_DATA_MAG_UPDATE_MILLIS){
+    //update accel to SD
+  }
+  if(tempTime - flightDataMillisAtLastAttitudeUpdate > FLIGHT_DATA_ATTITUDE_UPDATE_MILLIS){
+    //update accel to SD
+  }
+  if(tempTime - flightDataMillisAtLastTemperatureUpdate > FLIGHT_DATA_TEMPERATURE_UPDATE_MILLIS){
+    //update accel to SD
+  }
+  if(tempTime - flightDataMillisAtLastGPSUpdate > FLIGHT_DATA_GPS_UPDATE_MILLIS){
+    //update accel to SD
+  }
+  return 0;
+}
+
+
+long telemetryMillisAtLastGyroUpdate = 0;
+long telemetryMillisAtLastAccelUpdate = 0;
+long telemetryMillisAtLastMagUpdate = 0;
+long telemetryMillisAtLastAttitudeUpdate = 0;
+long telemetryMillisAtLastTemperatureUpdate = 0;
+long telemetryMillisAtLastGPSUpdate = 0;
+
+int sendDataThroughRadio(){
+  long tempTime = millis();
+  if(tempTime - telemetryMillisAtLastAccelUpdate > FLIGHT_DATA_ACCEL_UPDATE_MILLIS){
+    //update accel to SD
+  }
+  if(tempTime - telemetryMillisAtLastGyroUpdate > FLIGHT_DATA_GYRO_UPDATE_MILLIS){
+    //update accel to SD
+  }
+  if(tempTime - telemetryMillisAtLastMagUpdate > FLIGHT_DATA_MAG_UPDATE_MILLIS){
+    //update accel to SD
+  }
+  if(tempTime - telemetryMillisAtLastAttitudeUpdate > FLIGHT_DATA_ATTITUDE_UPDATE_MILLIS){
+    //update accel to SD
+  }
+  if(tempTime - telemetryMillisAtLastTemperatureUpdate > FLIGHT_DATA_TEMPERATURE_UPDATE_MILLIS){
+    //update accel to SD
+  }
+  if(tempTime - telemetryMillisAtLastGPSUpdate > FLIGHT_DATA_GPS_UPDATE_MILLIS){
+    //update accel to SD
+  }
+  return 0;
+}
+
 void loop() {
     // put your main code here, to run repeatedly:
     updateSystems();
     //check for recovery events
     int recoveryEvent = handleRecovery();
     //check for new radio commands and handle
+    checkBaseCommands();
+    reportFlightData();
+}
 
-    //check for emergency modes and handle'
+String printFloat(float toPrint, int length){
+  String toReturn = String(toPrint, length);
+  return toReturn;
+}
 
+long millisAtLastAltitudeUpdate = 0;
+
+int addAltitudeData(float data){
+  long tempTime = millis();
+  currentRunningAltitude = ALTITUDE_NOISE_REDUCTION_SMOOTHER_VALUE*currentRunningAltitude + data*(1.0-ALTITUDE_NOISE_REDUCTION_SMOOTHER_VALUE);
+  if(tempTime - millisAtLastAltitudeUpdate >= ALTITUDE_NOISE_REDUCTION_UPDATE_MILLIS){
+    runningAltitudeData[runningAltitudeDataIndex] = currentRunningAltitude;
+    runningAltitudeDataIndex++;
+    if(runningAltitudeDataIndex >= ALTITUDE_BUFFER_SIZE) runningAltitudeDataIndex = 0;
+    millisAtLastAltitudeUpdate = millis();
+  }
+  return 0;
+}
+
+#define APOGEE_REACHED 0
+#define APOGEE_NOT_REACHED -1
+int checkForApogee(){
+  int maxAltitudeIndex = 0;
+  for(int i = 1; i < runningAltitudeDataIndex; i++){
+    if(runningAltitudeData[i] > runningAltitudeData[maxAltitudeIndex]){
+      maxAltitudeIndex = i;
+    }
+  }
+  if(maxAltitudeIndex * ALTITUDE_NOISE_REDUCTION_UPDATE_MILLIS >= APOGEE_DETECTION_MIN_LAUNCH_MILLIS && runningAltitudeData[maxAltitudeIndex] >= APOGEE_DETECTION_MIN_ALTITUDE){
+    return APOGEE_REACHED;
+  }
+  return APOGEE_NOT_REACHED;
+}
+
+#define DROGUE_CHUTE_PIN 3
+#define MAIN_CHUTE_PIN 4
+int numDrogueChuteServos = 2;
+int numMainChuteServos = 2;
+int *drogueChutePins;
+int *mainChutePins;
+
+
+void initRecoverySystem(int mainChutePins[], double mainChuteDeplomentPositions[], int numMainChutes, int drogueChutePins[], double drogueChuteDeplomentPositions[], int numDrogueChutes){
+
+}
+
+int fireChutes(){
+  if(FIRE_DROGUE_CHUTE){
+    //servo code
+  }
 }

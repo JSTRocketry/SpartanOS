@@ -1,4 +1,4 @@
-#include <SensorPackage.h>
+#include "SensorPackage.h"
 
 
 
@@ -12,6 +12,9 @@ int SensorPackage::begin(){
   if(bmpInitStatus < 0) errors &= SENSOR_PACKAGE_PRESSURE_SENSOR_INIT_FAILED;
   //gps init
 
+
+
+  zeroAltitudePressure = pressure.readPressure();
   return errors;
 }
 
@@ -19,6 +22,11 @@ int SensorPackage::update(){
   //check scheduling and update necessary sensors
   //return code with all new sensors that have been updated
   int updatedSensorCodes = 0;
+  long curTime = millis();
+  if(curTime - lastPressureUpdate > SENSOR_PACKAGE_PRESSURE_UPDATE_MILLIS){
+    curPressureData = pressure.readPressure();
+    curAltitude = pressure.readAltitude(zeroAltitudePressure);
+  }
   return updatedSensorCodes;
 }
 
@@ -27,6 +35,45 @@ int SensorPackage::getAccelData(float *xData, float *yData, float *zData){
   *yData = curAccelData[1];
   *zData = curAccelData[2];
   return 0; //idk what the return codes should be here....
+}
+
+
+int SensorPackage::updateGyro(){
+  imu.getGyroData(&this->genVector);
+  curGyroData[0] = genVector.x;
+  curGyroData[1] = genVector.y;
+  curGyroData[2] = genVector.z;
+  return 0;
+}
+
+int SensorPackage::updateAccel(){
+  imu.getAccelData(&this->genVector);
+  curAccelData[0] = genVector.x;
+  curAccelData[1] = genVector.y;
+  curAccelData[2] = genVector.z;
+  return 0;
+}
+
+int SensorPackage::updateGPS(){
+  return 0;
+}
+
+int SensorPackage::updateMag(){
+  //TODO implement?
+  return -5;
+}
+
+int SensorPackage::updateAttitude(){
+  imu.getData(&imuData);
+  curAttitudeData[0] = imuData.orientation.x;
+  curAttitudeData[1] = imuData.orientation.y;
+  curAttitudeData[2] = imuData.orientation.z;
+  return 0;
+}
+
+int SensorPackage::resetForFlight(){
+  zeroAltitudePressure = pressure.readPressure();
+  return 0;
 }
 
 int SensorPackage::getGyroData(float *xData, float *yData, float *zData){

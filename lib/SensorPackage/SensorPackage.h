@@ -20,6 +20,12 @@
 #define SENSOR_PACKAGE_NEW_GPS_DATA                 0b00100000
 #define SENSOR_PACKAGE_NEW_TEMPERATURE_DATA         0b01000000
 
+
+#define SENSOR_PACKAGE_PRESSURE_UPDATE_MILLIS 100
+#define SENSOR_PACKAGE_IMU_UPDATE_MILLIS 5
+#define SENSOR_PACKAGE_GPS_UPDATE_MILLIS 2000
+#define SENSOR_PACKAGE_TEMPERATURE_UPDATE_MILLIS 1000
+
 class SensorPackage{
 public:
   int begin();
@@ -32,8 +38,10 @@ public:
   int getAltitudeData(float *deltaAltitude);
   int getTemperatureData(float *temperature);
   int getGPSData();
+  int resetForFlight();
 private:
   float curPressureData;
+  float zeroAltitudePressure;
   float curTemperatureData;
   float curAccelData[3]= {};
   float curGyroData[3] = {};
@@ -48,6 +56,13 @@ private:
   long lastGPSUpdate = 0;
   long lastTempUpdate = 0;
 
+  int updateGyro();
+  int updateAccel();
+  int updateMag();
+  int updatePressure();
+  int updateAttitude();
+  int updateGPS();
+  Vector3f genVector;
   // cur gps data
   Adafruit_BMP280 pressure;
   MPU9250 imu;

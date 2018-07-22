@@ -19,8 +19,13 @@ public:
   int checkForSync();
   int sendData(String data);
   int checkForBaseCommand();
+  int available();
+  void getCurrentMessages(String * buffer, int *numberAvailable);
+  int checkRadioStatus();
 private:
   String runningMessage;
+  String recievedMessagesBuffer[16];
+  int recievedMessagesBufferIndex = 0;
   String preSyncBuffer[RADIO_BUFFER_SIZE];
   int curBufferIndex = 0;
   bool hasSynced = false;
