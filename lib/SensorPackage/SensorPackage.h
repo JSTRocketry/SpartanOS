@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "MPU9250.h"
 #include <Adafruit_BMP280.h>
+#include "GPS_Handler.h"
 
 /* error codes */
 #define SENSOR_PACKAGE_PRESSURE_SENSOR_INIT_FAILED  0b00000001
@@ -37,7 +38,7 @@ public:
   int getPressureData(float *pressure);
   int getAltitudeData(float *deltaAltitude);
   int getTemperatureData(float *temperature);
-  int getGPSData();
+  int getGPSData(GPS_Handler::GpsLocationData *location);
   int resetForFlight();
 private:
   float curPressureData;
@@ -55,6 +56,7 @@ private:
   long lastMagUpdate = 0;
   long lastGPSUpdate = 0;
   long lastTempUpdate = 0;
+  GPS_Handler::GpsLocationData locationData;
 
   int updateGyro();
   int updateAccel();
@@ -67,6 +69,9 @@ private:
   Adafruit_BMP280 pressure;
   MPU9250 imu;
   MPU9250_Data imuData;
+  GPS_Handler *gps;
+
+
 
 };
 #endif

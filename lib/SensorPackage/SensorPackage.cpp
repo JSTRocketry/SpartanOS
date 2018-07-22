@@ -11,6 +11,7 @@ int SensorPackage::begin(){
   int bmpInitStatus = pressure.begin();
   if(bmpInitStatus < 0) errors &= SENSOR_PACKAGE_PRESSURE_SENSOR_INIT_FAILED;
   //gps init
+  gps = new GPS_Handler(&Serial2);
 
 
 
@@ -55,6 +56,10 @@ int SensorPackage::updateAccel(){
 }
 
 int SensorPackage::updateGPS(){
+  int gpsStatus = gps->update();
+  if(gpsStatus == 0){
+    gps->getLocationData(&locationData);
+  }
   return 0;
 }
 
@@ -83,9 +88,9 @@ int SensorPackage::getGyroData(float *xData, float *yData, float *zData){
   return 0; //idk what the return codes should be here....
 }
 
-int SensorPackage::getGPSData(){
-  //TODO implement
-  return -1; //not yet implemented
+int SensorPackage::getGPSData(GPS_Handler::GpsLocationData *location){
+  *location = locationData;
+  return 0;
 }
 
 int SensorPackage::getMagData(float *xData, float *yData, float *zData){
