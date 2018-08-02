@@ -3,7 +3,12 @@
 
 int RadioTelemetry::begin(){
   Serial3.begin(RADIO_BAUD);
-  Serial3.print(RADIO_SYNC_REQUEST);
+  attemptSync();
+  return 0;
+}
+
+int RadioTelemetry::attemptSync(){
+  Serial3.println(RADIO_SYNC_REQUEST);
   return 0;
 }
 
@@ -35,6 +40,19 @@ void RadioTelemetry::writeBuffer(String * buff, int size){
   for(int i = 0; i < size; i ++){
     Serial3.println(buff[i]);
   }
+}
+
+int RadioTelemetry::sendData(String data){
+  if(!hasSynced){
+    if(curBufferIndex < RADIO_BUFFER_SIZE - 1){
+      preSyncBuffer[curBufferIndex] = data;
+      curBufferIndex ++;
+    }
+  }
+  else{
+    Serial3.println(data);
+  }
+  return 0;
 }
 
 int RadioTelemetry::available(){

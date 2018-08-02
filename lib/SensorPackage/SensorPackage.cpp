@@ -15,7 +15,7 @@ int SensorPackage::begin(){
 
 
 
-  zeroAltitudePressure = pressure.readPressure();
+  zeroAltitudePressure = pressure.readPressure()/100.0;
   return errors;
 }
 
@@ -27,6 +27,8 @@ int SensorPackage::update(){
   if(curTime - lastPressureUpdate > SENSOR_PACKAGE_PRESSURE_UPDATE_MILLIS){
     curPressureData = pressure.readPressure();
     curAltitude = pressure.readAltitude(zeroAltitudePressure);
+    //Serial.println(zeroAltitudePressure);
+    lastPressureUpdate = curTime;
   }
   return updatedSensorCodes;
 }

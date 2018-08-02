@@ -3,12 +3,12 @@
 
 #include <Arduino.h>
 
-#define RADIO_BUFFER_SIZE 64
+#define RADIO_BUFFER_SIZE 128
 #define WAITING_FOR_SYNC_BUFFERING_MESSAGES -1
 #define SYNC_ACQUIRED_SENDING_REALTIME -2
 
 
-#define RADIO_BAUD 2400
+#define RADIO_BAUD 4800
 #define RADIO_SYNC_REQUEST "PING"
 #define RADIO_SYNC_RETURN "ECHO"
 
@@ -22,6 +22,7 @@ public:
   int available();
   void getCurrentMessages(String * buffer, int *numberAvailable);
   int checkRadioStatus();
+  int attemptSync();
 private:
   String runningMessage;
   String recievedMessagesBuffer[16];
@@ -31,7 +32,7 @@ private:
   bool hasSynced = false;
   void writeBuffer(String * buff, int size);
   void updateIncommingBuffer();
-
+  long lastSyncRequest = 0;
 };
 
 

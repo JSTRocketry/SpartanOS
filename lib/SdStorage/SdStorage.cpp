@@ -22,7 +22,7 @@ int SdStorage::begin(){
 int SdStorage::getFileName(String *name){
   String base = "fdat";
   int counter = 0;
-  while(counter < 10){
+  while(counter < 100){
     if(!SD.exists(base + String(counter) + ".txt")){
       *name = base + String(counter) + ".txt";
       return 0;
@@ -33,12 +33,17 @@ int SdStorage::getFileName(String *name){
 }
 
 int SdStorage::writeData(String data){
+  //Serial.println("Writing " + data);
   if(buffIndex + data.length() + 1 >= SD_BUFFER_SIZE){
+    //Serial.println("Wririntg to sd card");
     flightData.write(writeBuff,buffIndex);
+    //Serial.println("Mid");
     flightData.flush();
+    //Serial.println("clearing mem");
     for(int i = 0; i < buffIndex; i ++){
       writeBuff[i] = '\0';
     }
+    //Serial.println("done!");
     buffIndex = 0;
   }
   for(uint i = 0; i < data.length(); i ++){
